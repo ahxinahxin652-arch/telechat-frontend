@@ -240,7 +240,7 @@ export default defineComponent({
           />
         </div>
 
-        <!-- 联系人列表 -->
+        <!-- 联系人列表1 -->
         <div class="contacts-list">
           <div v-if="contacts.length === 0 && !isSearching" class="no-contacts">
             No contacts found
