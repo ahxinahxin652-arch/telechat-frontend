@@ -1,0 +1,18 @@
+/* 暗黑主题样式 */
+:root {
+    --bg-color1: rgb(23, 33, 43); /* 侧边栏，顶栏，底栏不太深  */
+    --bg-color2: rgb(14, 22, 33); /* 聊天界面 */
+    --border-color: rgb(14, 22, 33);
+    --input-color: rgb(36, 47, 61);
+    --sent-color: rgb(43, 82, 120);
+    --received-color: rgb(24, 37, 51);
+    --side-chat-color: rgb(23, 33, 43);
+    --side-chat-hover-color: rgb(32, 43, 54);
+    --side-chat-active-color: rgb(43, 82, 120);
+    --icon-color: rgb(23, 33, 43);
+    --font-color: rgb(233, 232, 232);
+    --hover-icon-color: rgb(64, 158, 255);
+
+    --button-color: rgb(43, 82, 120);
+    --button-hover-color: rgb(32, 43, 54);
+}
