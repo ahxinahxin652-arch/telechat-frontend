@@ -330,6 +330,9 @@ export default defineComponent({
           case 'system':
             console.log('系统消息:', message.content);
             break;
+          case 'contact_apply':
+            ElMessage.info("你有好友申请");
+            break;
           case 'chat':
             // 处理聊天消息
             this.handleIncomingMessage(message);

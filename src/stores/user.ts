@@ -49,16 +49,26 @@ export const useUserStore = defineStore('user', {
             }
         },
 
-        // 设置用户信息
-        async setProfile(userInfo: Profile) {
-            // 调用API请求
-            const response = await userApi.updateProfile(userInfo)
-            if (response && response.code === 200) {
-                ElMessage.success('更新用户信息成功')
-                this.profile = userInfo;
-                this.lastUpdate = Date.now();
-            } else {
-                throw new Error('更新用户信息失败');
+        // 1. 新增：仅用于登录后或获取信息后，更新本地状态（不发请求）
+        saveProfileToState(userInfo: Profile) {
+            this.profile = userInfo;
+            this.lastUpdate = Date.now();
+        },
+
+        // 2. 修改：用于用户在个人中心修改资料（发送请求）
+        async updateProfile(userInfo: Profile) {
+            try {
+                const response = await userApi.updateProfile(userInfo);
+                if (response && response.code === 200) {
+                    ElMessage.success('更新用户信息成功');
+                    // 更新成功后，同步更新本地状态
+                    this.saveProfileToState(userInfo);
+                } else {
+                    throw new Error(response.msg || '更新用户信息失败');
+                }
+            } catch (error) {
+                console.error(error);
+                throw error;
             }
         },
 
@@ -76,7 +86,7 @@ export const useUserStore = defineStore('user', {
                     return response.data; // 返回头像URL
                 } else {
                     console.log(response.msg || '头像上传失败');
-                    return  '';
+                    return '';
                 }
             } catch (error) {
                 ElMessage.error(error instanceof Error ? error.message : '头像上传失败');

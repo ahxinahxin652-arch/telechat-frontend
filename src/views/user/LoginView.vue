@@ -210,7 +210,7 @@ export default defineComponent({
               // 保存token
               localStorage.setItem('token', response.data.token)
               // 保存登录信息
-              useUserStore().setProfile(response.data.profile);
+              useUserStore().saveProfileToState(response.data.profile);
               // 登录成功
               ElMessage.success('登录成功')
               // 跳转到首页
