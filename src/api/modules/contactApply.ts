@@ -6,7 +6,9 @@ import {
     ContactApplyHandleDTO,
     AddContactApplyResponse,
     ApplyListResponse,
-    HandleApplyResponse
+    HandleApplyResponse,
+    GetUnreadCountResponse,
+    MarkAllResponse,
 } from "../types/contactApply";
 
 // 联系人申请相关API
@@ -35,5 +37,21 @@ export const contactApplyApi = {
      */
     handleApply(data: ContactApplyHandleDTO): Promise<HandleApplyResponse> {
         return request.post('/contactApply/apply/handle', data);
-    }
+    },
+
+    /**
+     * 获取未读联系人申请总数
+     * @returns Promise<GetUnreadCountResponse>
+     */
+    getUnreadCount(): Promise<GetUnreadCountResponse> {
+        return request.get('/contactApply/unread-count');
+    },
+
+    /**
+     * 已读未读联系人申请
+     * @returns Promise<MarkAllResponse>
+     */
+    markAll(): Promise<MarkAllResponse> {
+        return request.put('/contactApply/read-all');
+    },
 };

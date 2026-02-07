@@ -48,6 +48,12 @@
             <User/>
           </el-icon>
           <span>我的好友</span>
+          <el-badge
+              :value="notificationStore.contactApplyCount"
+              :hidden="notificationStore.contactApplyCount === 0"
+              type="danger"
+              class="sidebar-badge"
+          />
         </div>
 
         <div class="menu-item" @click="goToSettings">
@@ -98,6 +104,8 @@ import themeManager from '@/utils/themeManager'
 import {useUserStore} from "@/stores/user";
 import {ElMessage, ElMessageBox} from "element-plus";
 import router from "@/router";
+import { useNotificationStore } from '@/stores/notification';
+
 
 export default defineComponent({
   name: 'SideBarView',
@@ -114,6 +122,13 @@ export default defineComponent({
     modelValue: {
       type: Boolean,
       default: false
+    }
+  },
+  setup() {
+    // 通知管理
+    const notificationStore = useNotificationStore();
+    return {
+      notificationStore
     }
   },
   // 数据
@@ -265,6 +280,13 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.menu-item {
+  display: flex;
+  align-items: center;
+  /* 确保 badge 能被挤到右边，或者用 absolute 定位 */
+  justify-content: space-between;
+}
+
 .sidebar-overlay {
   position: fixed;
   top: 0;

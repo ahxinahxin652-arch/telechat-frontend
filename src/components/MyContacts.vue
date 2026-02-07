@@ -7,6 +7,7 @@ import {Search} from '@element-plus/icons-vue'
 import {Message} from '@element-plus/icons-vue'
 import {contactApplyApi} from "@/api/modules/contactApply";
 import {contactApi} from "@/api/modules/contact";
+import {useNotificationStore} from '@/stores/notification';
 
 
 // 联系申请interface
@@ -47,6 +48,12 @@ export default defineComponent({
     }
   },
   emits: ['update:modelValue', 'close', 'add-contact'],
+  setup() {
+    const notificationStore = useNotificationStore();
+    return {
+      notificationStore
+    }
+  },
   data() {
     return {
       userStore: useUserStore(),
@@ -161,6 +168,8 @@ export default defineComponent({
     openContactsApply() {
       this.closeContactsWithoutAnimation(); // 先关闭联系人界面
       this.showContactApplyModal = true; // 显示申请联系人界面
+      // 清除红点
+      this.notificationStore.clearContactApply();
     },
 
     // 打开添加联系人弹窗
@@ -265,9 +274,14 @@ export default defineComponent({
       <!--添加联系人请求-->
       <div class="contacts-header">
         <h2>Contacts</h2>
-        <el-icon class="close-btn" @click="openContactsApply">
-          <Message/>
-        </el-icon>
+        <el-badge
+            :value="notificationStore.contactApplyCount"
+            :hidden="notificationStore.contactApplyCount === 0"
+        >
+          <el-icon class="close-btn" @click="openContactsApply">
+            <Message/>
+          </el-icon>
+        </el-badge>
       </div>
 
       <div class="contacts-content">
@@ -692,6 +706,7 @@ export default defineComponent({
 .create-btn:hover {
   background-color: #66b1ff;
 }
+
 /*                 联系人申请窗口                       */
 .contact-apply-modal-overlay {
   position: fixed;

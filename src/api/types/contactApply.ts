@@ -53,3 +53,21 @@ export interface HandleApplyResponse {
     msg: string;
     data: string | null;
 }
+
+/**
+ * 获取未读联系人申请总数响应
+ */
+export interface GetUnreadCountResponse {
+    code: number;
+    msg: string;
+    data: number | 0;
+}
+
+/**
+ * 已读未读联系人申请响应
+ */
+export interface MarkAllResponse {
+    code: number;
+    msg: string;
+    data: string | 0;
+}

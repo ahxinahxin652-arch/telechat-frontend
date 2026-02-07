@@ -1,134 +1,3 @@
-<template>
-  <div class="common-layout">
-    <el-container style="width: 100%;height: 100%;">
-      <el-aside class="sidebar" width="260px">
-        <div class="chat-list">
-          <div class="chat-search">
-            <el-button type="primary" circle size="small" @click="toggleSideBarView">
-              <el-icon>
-                <Operation/>
-              </el-icon>
-            </el-button>
-            <el-input
-                v-model="searchMessage"
-                class="side-input"
-                placeholder="Search"
-                clearable>
-            </el-input>
-          </div>
-
-          <div class="chat-items">
-            <!-- 使用 v-for 动态渲染聊天项 -->
-            <div
-                v-for="chat in chatList"
-                :key="chat.id"
-                class="chat-item"
-                :class="{ active: selectedChat && selectedChat.id === chat.id }"
-                @click="selectChat(chat)"
-            >
-              <div class="avatar">{{ chat.avatar || chat.name.charAt(0) }}</div>
-              <div class="chat-info">
-                <div class="chat-name">{{ chat.name }}</div>
-                <div class="last-message">{{ chat.lastMessage }}</div>
-              </div>
-              <div class="chat-time">{{ chat.lastTime }}</div>
-            </div>
-          </div>
-        </div>
-      </el-aside>
-
-      <el-container class="main-container">
-        <!-- 主内容保持不变 -->
-        <el-header class="chat-header">
-          <div class="chat-header-info">
-            <div class="avatar">U</div>
-            <div class="user-info">
-              <div class="user-name">用户名</div>
-              <div class="user-status">在线</div>
-            </div>
-          </div>
-          <div class="chat-header-actions">
-            <el-button circle size="small">
-              <el-icon>
-                <Search/>
-              </el-icon>
-            </el-button>
-            <el-button circle size="small">
-              <el-icon>
-                <More/>
-              </el-icon>
-            </el-button>
-          </div>
-        </el-header>
-
-        <el-main class="chat-messages">
-          <div class="message-list">
-            <div class="message received">
-              <div class="avatar">U</div>
-              <div class="message-content">
-                <div class="message-text">以上组件采用了 flex 布局，使用前请确定目标浏览器是否兼容。
-                  此外，的直接子元素必须是后四个组件中的一个或多个。 后四个组件的父元素必须是一个
-                </div>
-                <div class="message-time">10:25</div>
-              </div>
-            </div>
-            <div class="message sent">
-              <div class="avatar">M</div>
-              <div class="message-content">
-                <div class="message-text">你好！</div>
-                <div class="message-time">10:26</div>
-              </div>
-            </div>
-          </div>
-        </el-main>
-
-        <el-footer class="chat-input">
-          <div class="input-container">
-            <el-button circle>
-              <el-icon>
-                <Paperclip/>
-              </el-icon>
-            </el-button>
-            <el-input
-                v-model="inputMessage"
-                type="textarea"
-                :autosize="{ minRows: 1, maxRows: 10}"
-                placeholder="Write a message"
-                class="message-input"
-            ></el-input>
-            <el-button type="primary" circle>
-              <el-icon>
-                <Position/>
-              </el-icon>
-            </el-button>
-          </div>
-        </el-footer>
-      </el-container>
-    </el-container>
-
-    <!-- 侧边栏视图 -->
-    <SideBarView
-        v-model="showSideBarView"
-        @close="showSideBarView = false"
-        @profile="goToProfile"
-        @create-group="createNewGroup"
-        @create-channel="createNewChannel"
-        @my-contacts="goToMyContacts"
-        @settings="goToSettings"
-        @logout="logout"
-    />
-
-    <Profile
-        v-model="showProfile"
-        @close="showProfile = false"
-    />
-    <MyContacts
-        v-model="showMyContacts"
-        @close="showMyContacts = false"
-    />
-  </div>
-</template>
-
 <script lang="ts">
 import {defineComponent} from 'vue'
 import {useRouter} from 'vue-router'
@@ -144,6 +13,7 @@ import Profile from '@/components/Profile.vue'
 import MyContacts from "@/components/MyContacts.vue";
 import {ElMessage} from 'element-plus'
 import themeManager from '@/utils/themeManager'
+import { useNotificationStore } from '@/stores/notification';
 
 
 // 定义聊天项接口
@@ -170,10 +40,13 @@ export default defineComponent({
     MyContacts,
   },
   setup() {
-    const router = useRouter() // 在 setup 中获取 router 实例
+    const router = useRouter(); // 在 setup 中获取 router 实例
+    // 通知管理
+    const notificationStore = useNotificationStore();
     return {
       // 返回 router 实例供模板使用
-      router
+      router,
+      notificationStore
     }
   },
   data() {
@@ -331,7 +204,11 @@ export default defineComponent({
             console.log('系统消息:', message.content);
             break;
           case 'contact_apply':
-            ElMessage.info("你有好友申请");
+            // 收到好友申请，前端计数 +1
+            this.notificationStore.incrementContactApply();
+
+            // 可选：同时弹出 Notification 提示框
+            ElMessage('您有新的的好友申请');
             break;
           case 'chat':
             // 处理聊天消息
@@ -391,14 +268,153 @@ export default defineComponent({
     if (this.chatList.length > 0) {
       this.selectChat(this.chatList[0])
     }
+
+    // 获取好友申请未读消息
+    this.notificationStore.fetchUnreadCounts();
+    console.log(this.notificationStore.contactApplyCount)
   },
 })
 </script>
 
+<template>
+  <div class="common-layout">
+    <el-container style="width: 100%;height: 100%;">
+      <el-aside class="sidebar" width="260px">
+        <div class="chat-list">
+          <div class="chat-search">
+            <el-badge :value="notificationStore.totalCount" :hidden="notificationStore.totalCount === 0" class="notify-badge">
+              <el-button type="primary" circle size="small" @click="toggleSideBarView">
+                <el-icon><Operation/></el-icon>
+              </el-button>
+            </el-badge>
+            <el-input
+                v-model="searchMessage"
+                class="side-input"
+                placeholder="Search"
+                clearable>
+            </el-input>
+          </div>
+
+          <div class="chat-items">
+            <!-- 使用 v-for 动态渲染聊天项 -->
+            <div
+                v-for="chat in chatList"
+                :key="chat.id"
+                class="chat-item"
+                :class="{ active: selectedChat && selectedChat.id === chat.id }"
+                @click="selectChat(chat)"
+            >
+              <div class="avatar">{{ chat.avatar || chat.name.charAt(0) }}</div>
+              <div class="chat-info">
+                <div class="chat-name">{{ chat.name }}</div>
+                <div class="last-message">{{ chat.lastMessage }}</div>
+              </div>
+              <div class="chat-time">{{ chat.lastTime }}</div>
+            </div>
+          </div>
+        </div>
+      </el-aside>
+
+      <el-container class="main-container">
+        <!-- 主内容保持不变 -->
+        <el-header class="chat-header">
+          <div class="chat-header-info">
+            <div class="avatar">U</div>
+            <div class="user-info">
+              <div class="user-name">用户名</div>
+              <div class="user-status">在线</div>
+            </div>
+          </div>
+          <div class="chat-header-actions">
+            <el-button circle size="small">
+              <el-icon>
+                <Search/>
+              </el-icon>
+            </el-button>
+            <el-button circle size="small">
+              <el-icon>
+                <More/>
+              </el-icon>
+            </el-button>
+          </div>
+        </el-header>
+
+        <el-main class="chat-messages">
+          <div class="message-list">
+            <div class="message received">
+              <div class="avatar">U</div>
+              <div class="message-content">
+                <div class="message-text">以上组件采用了 flex 布局，使用前请确定目标浏览器是否兼容。
+                  此外，的直接子元素必须是后四个组件中的一个或多个。 后四个组件的父元素必须是一个
+                </div>
+                <div class="message-time">10:25</div>
+              </div>
+            </div>
+            <div class="message sent">
+              <div class="avatar">M</div>
+              <div class="message-content">
+                <div class="message-text">你好！</div>
+                <div class="message-time">10:26</div>
+              </div>
+            </div>
+          </div>
+        </el-main>
+
+        <el-footer class="chat-input">
+          <div class="input-container">
+            <el-button circle>
+              <el-icon>
+                <Paperclip/>
+              </el-icon>
+            </el-button>
+            <el-input
+                v-model="inputMessage"
+                type="textarea"
+                :autosize="{ minRows: 1, maxRows: 10}"
+                placeholder="Write a message"
+                class="message-input"
+            ></el-input>
+            <el-button type="primary" circle>
+              <el-icon>
+                <Position/>
+              </el-icon>
+            </el-button>
+          </div>
+        </el-footer>
+      </el-container>
+    </el-container>
+
+    <!-- 侧边栏视图 -->
+    <SideBarView
+        v-model="showSideBarView"
+        @close="showSideBarView = false"
+        @profile="goToProfile"
+        @create-group="createNewGroup"
+        @create-channel="createNewChannel"
+        @my-contacts="goToMyContacts"
+        @settings="goToSettings"
+        @logout="logout"
+    />
+
+    <Profile
+        v-model="showProfile"
+        @close="showProfile = false"
+    />
+    <MyContacts
+        v-model="showMyContacts"
+        @close="showMyContacts = false"
+    />
+  </div>
+</template>
 
 <style scoped>
 
 /*------------------------------------------------全局设定-------------------------------------------------------*/
+/* 消息通知 */
+.notify-badge :deep(.el-badge__content) {
+  top: 5px;
+  right: 5px;
+}
 .common-layout {
   width: 100vw;
   height: 100vh;
