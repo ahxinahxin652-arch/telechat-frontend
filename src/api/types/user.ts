@@ -8,9 +8,6 @@ export interface GetProfileResponse {
         avatar: string
         gender: number
         bio: string
-        createTime: string
-        updateTime: string
-        lastLoginTime: string
     }
 }
 

@@ -206,7 +206,46 @@ export default defineComponent({
         this.closeContacts();
         this.newContactForm.userName = '';
       }
-    }
+    },
+
+    // 关闭联系人申请窗口
+    closeContactApply() {
+      this.showContactApplyModal = false;
+      this.$emit('update:modelValue', true);
+    },
+
+    // 同意联系人申请
+    async acceptApply(applyId: number) {
+
+      const res = await contactApplyApi.handleApply(
+          {
+            contactId: applyId,
+            agree: true
+          }
+      );
+      if (res.code === 200) {
+        ElMessage.success('Contact added');
+        await this.loadContacts();
+        await this.loadContactApplies();
+      } else {
+        ElMessage.error(res.msg);
+      }
+    },
+
+    // 拒绝联系人申请
+    async rejectApply(applyId: number) {
+      const res = await contactApplyApi.handleApply({
+        contactId: applyId,
+        agree: false
+      });
+      if (res.code === 200) {
+        ElMessage.success('Request rejected');
+        await this.loadContactApplies();
+      } else {
+        ElMessage.error(res.msg);
+      }
+    },
+
   }
 })
 </script>
@@ -223,9 +262,12 @@ export default defineComponent({
         :class="{ 'slide-in': isVisible, 'slide-out': isSlidingOut }"
         @click.stop
     >
+      <!--添加联系人请求-->
       <div class="contacts-header">
         <h2>Contacts</h2>
-        <el-icon class="close-btn" @click="openContactsApply"><Message/></el-icon>
+        <el-icon class="close-btn" @click="openContactsApply">
+          <Message/>
+        </el-icon>
       </div>
 
       <div class="contacts-content">
@@ -240,7 +282,7 @@ export default defineComponent({
           />
         </div>
 
-        <!-- 联系人列表1 -->
+        <!-- 联系人列表 -->
         <div class="contacts-list">
           <div v-if="contacts.length === 0 && !isSearching" class="no-contacts">
             No contacts found
@@ -272,7 +314,7 @@ export default defineComponent({
   <!-- 添加联系人弹窗 -->
   <div
       v-if="showAddContactModal"
-      class="add-contact-modal-overlay"
+      class="contact-apply-modal-overlay"
       @click="handleOverlayClickAddContact"
   >
     <div class="add-contact-modal" @click.stop>
@@ -289,6 +331,61 @@ export default defineComponent({
       </div>
     </div>
   </div>
+
+  <!-- 联系人申请窗口 -->
+  <div
+      v-if="showContactApplyModal"
+      class="add-contact-modal-overlay"
+      @click="closeContactApply"
+  >
+    <div class="add-contact-modal" @click.stop>
+      <h3>Contact Requests</h3>
+
+      <div class="contact-apply-list">
+        <div
+            v-if="contactApplies.length === 0"
+            class="no-contacts"
+        >
+          No contact requests
+        </div>
+
+        <div
+            v-else
+            class="contact-apply-item"
+            v-for="apply in contactApplies"
+            :key="apply.id"
+        >
+          <div class="contact-avatar">
+            <img
+                :src="apply.avatar || 'src/assets/img/default_avatar.png'"
+                alt="Avatar"
+            />
+          </div>
+          <div class="apply-info">
+            <div class="apply-name">
+              {{ apply.nickname || apply.username }}
+            </div>
+          </div>
+
+          <div class="apply-actions">
+            <button class="accept-btn" @click="acceptApply(apply.id)">
+              Accept
+            </button>
+            <button class="reject-btn" @click="rejectApply(apply.id)">
+              Reject
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="cancel-btn" @click="closeContactApply">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
 </template>
 
 <style scoped>
@@ -447,7 +544,7 @@ export default defineComponent({
   border-radius: 50%;
 }
 
-.contact-info{
+.contact-info {
   display: flex;
   margin-left: 20px;
 }
@@ -594,5 +691,73 @@ export default defineComponent({
 
 .create-btn:hover {
   background-color: #66b1ff;
+}
+/*                 联系人申请窗口                       */
+.contact-apply-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 2001;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.contact-apply-list {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 300px;
+  min-height: 300px;
+  overflow-y: auto;
+}
+
+.contact-apply-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+  padding: 8px 4px;
+  border-radius: 8px;
+}
+
+.contact-apply-item:hover {
+  background-color: var(--side-chat-hover-color);
+}
+
+.apply-info {
+  flex: 1;
+}
+
+.apply-name {
+  color: var(--font-color);
+  font-size: 14px;
+}
+
+.apply-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.accept-btn {
+  background-color: #67c23a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.reject-btn {
+  background-color: #f56c6c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
 }
 </style>

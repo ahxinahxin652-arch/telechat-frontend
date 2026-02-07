@@ -10,9 +10,6 @@ export interface Profile {
     avatar: string
     gender: number
     bio: string
-    createTime: string
-    updateTime: string
-    lastLoginTime: string
 }
 
 // 定义 Store
