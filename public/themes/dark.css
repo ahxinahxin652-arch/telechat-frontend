@@ -2,6 +2,7 @@
 :root {
     --bg-color1: rgb(23, 33, 43); /* 侧边栏，顶栏，底栏不太深  */
     --bg-color2: rgb(14, 22, 33); /* 聊天界面 */
+    --bg-color3: rgb(36, 47, 61); /* 好友信息界面 */
     --border-color: rgb(14, 22, 33);
     --input-color: rgb(36, 47, 61);
     --sent-color: rgb(43, 82, 120);

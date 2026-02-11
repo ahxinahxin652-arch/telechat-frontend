@@ -2,6 +2,7 @@
 :root {
     --bg-color1: rgb(245, 245, 245); /* 浅灰色背景 */
     --bg-color2: rgb(255, 255, 255); /* 白色背景 */
+    --bg-color3: rgb(203, 253, 192); /* 好友背景 */
     --border-color: rgb(220, 220, 220);
     --input-color: rgb(255, 255, 255);
     --sent-color: rgb(173, 216, 230); /* 浅蓝色 */
