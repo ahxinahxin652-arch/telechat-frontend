@@ -208,7 +208,7 @@ export default defineComponent({
             this.notificationStore.incrementContactApply();
 
             // 可选：同时弹出 Notification 提示框
-            ElMessage('您有新的的好友申请');
+            ElMessage.info('您有新的的好友申请');
             break;
           case 'chat':
             // 处理聊天消息
