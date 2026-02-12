@@ -125,7 +125,7 @@ export default defineComponent({
       this.profile.bio = this.editProfile.bio
 
       // 更新 store
-      this.userStore.setProfile({ ...this.profile })
+      this.userStore.updateProfile({ ...this.profile })
       this.isEditing = false
     },
 

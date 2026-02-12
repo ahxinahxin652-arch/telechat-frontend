@@ -1,8 +1,8 @@
 <script lang="ts">
 import {defineComponent} from 'vue'
-import {ElInput, ElMessage} from 'element-plus'
+import {ElInput, ElMessage, ElMessageBox} from 'element-plus'
 import {useUserStore} from '@/stores/user'
-import {Search, Message, ArrowLeft} from '@element-plus/icons-vue' // 引入 ArrowLeft 返回图标
+import {Search, Message, Back, Comment, BellFilled, PhoneFilled, MoreFilled, Connection, Delete, Lock} from '@element-plus/icons-vue' // 引入 ArrowLeft 返回图标
 import {contactApplyApi} from "@/api/modules/contactApply";
 import {contactApi} from "@/api/modules/contact";
 import {useNotificationStore} from '@/stores/notification';
@@ -24,7 +24,8 @@ interface Contact {
   username: string,
   nickname: string,
   avatar: string,
-  remark: string
+  remark: string,
+  bio: string
 }
 
 export default defineComponent({
@@ -37,7 +38,14 @@ export default defineComponent({
   components: {
     ElInput,
     Message,
-    ArrowLeft // 注册 ArrowLeft 图标
+    Back,
+    Comment,
+    BellFilled,
+    PhoneFilled,
+    MoreFilled,
+    Connection,
+    Delete,
+    Lock
   },
   props: {
     modelValue: {
@@ -100,6 +108,7 @@ export default defineComponent({
     }
   },
   methods: {
+    // 加载联系人
     async loadContacts() {
       try {
         const response = await contactApi.getContacts();
@@ -114,6 +123,7 @@ export default defineComponent({
       }
     },
 
+    // 加载联系申请
     async loadContactApplies() {
       try {
         const response = await contactApplyApi.getApplyList();
@@ -252,10 +262,50 @@ export default defineComponent({
       }, 300);
     },
 
+    // 发消息，打开会话
     sendMessageToContact() {
       ElMessage.success(`Redirecting to chat with ${this.selectedContact?.nickname || this.selectedContact?.username}...`);
       this.closeContactDetails();
       this.closeContacts();
+    },
+
+    // 删除联系人
+    async deleteContact(contactId: number) {
+      try {
+        // 1. 弹出确认对话框
+        await ElMessageBox.confirm(
+            '确定要删除该联系人吗？此操作将无法恢复。', // 提示内容
+            '删除确认', // 标题
+            {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'warning', // 图标类型
+            }
+        )
+
+        // 2. 用户点击“确定”后，执行 API 调用
+        const response = await contactApi.deleteContact(contactId);
+
+        if (response.code === 200) {
+          this.closeContactDetails();
+          ElMessage.success("删除该联系人成功");
+          // 建议：此处可以调用刷新联系人列表的方法，例如 this.getContactList()
+        } else {
+          // 优先显示后端返回的错误信息，如果没有则显示默认信息
+          ElMessage.error(response.msg || "删除联系人失败，请稍后再试");
+        }
+
+      } catch (error) {
+        // 3. 处理取消操作或异常
+        if (error === 'cancel') {
+          // 用户点击了“取消”，不做任何操作
+          console.log('用户取消删除');
+        } else {
+          // 其他未知错误
+          console.error('删除联系人出错:', error);
+          ElMessage.error("操作发生错误");
+        }
+      }
     }
   }
 })
@@ -334,11 +384,9 @@ export default defineComponent({
       <transition name="slide-panel">
         <div class="contact-details-layer" v-if="showContactDetailsModal">
 
-          <div class="contact-header">
-            <el-icon class="back-btn" @click="closeContactDetails">
-              <ArrowLeft/>
-            </el-icon>
-          </div>
+          <el-icon class="absolute-back-btn" @click="closeContactDetails">
+            <Back/>
+          </el-icon>
 
           <div class="details-scroll-content" v-if="selectedContact">
             <div class="details-avatar">
@@ -349,39 +397,42 @@ export default defineComponent({
               <div class="details-nickname">{{ selectedContact.remark || selectedContact.nickname }}</div>
               <div class="details-username">@{{ selectedContact.username }}</div>
             </div>
-            <!--操作-->
             <div class="details-actions">
-              <!--message-->
               <div class="action-button">
                 <div class="action-icon">
-
+                  <el-icon>
+                    <Comment/>
+                  </el-icon>
                 </div>
                 <div class="action-font">
                   Message
                 </div>
               </div>
-              <!--mute-->
               <div class="action-button">
                 <div class="action-icon">
-
+                  <el-icon>
+                    <BellFilled/>
+                  </el-icon>
                 </div>
                 <div class="action-font">
                   Mute
                 </div>
               </div>
-              <!--call-->
               <div class="action-button">
                 <div class="action-icon">
-
+                  <el-icon>
+                    <PhoneFilled/>
+                  </el-icon>
                 </div>
                 <div class="action-font">
                   Call
                 </div>
               </div>
-              <!--more-->
               <div class="action-button">
                 <div class="action-icon">
-
+                  <el-icon>
+                    <MoreFilled/>
+                  </el-icon>
                 </div>
                 <div class="action-font">
                   More
@@ -389,31 +440,37 @@ export default defineComponent({
               </div>
             </div>
 
-            <!--remark与bio-->
             <div class="details-full-info">
               <div class="person-info">
-              <div>remark</div>
-                daddad
+                <div>remark</div>
+                {{selectedContact.remark || '暂无备注'}}
               </div>
               <div class="person-info">
                 <div>Bio</div>
-                daddad
+                {{selectedContact.bio}}
               </div>
             </div>
 
-            <!--共同群聊-->
             <div class="details-full-info">
               <div class="full-info">
-              1 group in common
+                <el-icon class="full-info-icon">
+                  <connection/>
+                </el-icon>
+                1 group in common
               </div>
             </div>
 
-            <!--operate-->
-            <div class="details-full-info">
-              <div class="full-info">
+            <div class="details-full-info operate-block">
+              <div class="full-info" @click="deleteContact(selectedContact.id)">
+                <el-icon class="full-info-icon">
+                  <Delete/>
+                </el-icon>
                 Delete Contact
               </div>
               <div class="full-info">
+                <el-icon class="full-info-icon">
+                  <Lock/>
+                </el-icon>
                 Block Contact
               </div>
             </div>
@@ -425,7 +482,6 @@ export default defineComponent({
     </div>
   </div>
 
-  <!--申请联系界面  -->
   <div
       v-if="showAddContactModal"
       class="contact-apply-modal-overlay"
@@ -444,7 +500,6 @@ export default defineComponent({
     </div>
   </div>
 
-  <!--联系申请处理界面  -->
   <div
       v-if="showContactApplyModal"
       class="add-contact-modal-overlay"
@@ -695,36 +750,36 @@ export default defineComponent({
   transform: translateX(0);
 }
 
-.contact-header {
-  justify-content: space-between;
-  background-color: var(--bg-color3);
-  padding: 0;
-}
-
-.back-btn {
-  font-size: 20px;
+/* ================== 修改部分：绝对定位悬浮的返回按钮 ================== */
+.absolute-back-btn {
+  position: absolute;
+  top: 15px; /* 贴近顶部边缘，与头像顶部平齐 */
+  left: 15px;
+  z-index: 20;
+  font-size: 35px;
   cursor: pointer;
   color: var(--font-color);
-  padding: 5px;
+  padding: 8px;
   border-radius: 50%;
   transition: background-color 0.2s;
 }
 
-.back-btn:hover {
+.absolute-back-btn:hover {
   background-color: var(--side-chat-hover-color);
 }
 
-.header-placeholder {
-  width: 30px; /* 与左侧 back-btn 保持一致，使标题居中 */
-}
+/* ================================================================= */
 
 .details-scroll-content {
   flex: 1;
   overflow-y: auto;
-  padding: 0 0 15px;
+  /* 顶部留出 20px 的 padding，使其不会贴边，同时也刚好和悬浮返回按钮对齐 */
+  padding: 15px 0 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  max-height: 100%;
 }
 
 .details-avatar img {
@@ -740,7 +795,7 @@ export default defineComponent({
 }
 
 .details-nickname {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--font-color);
   margin-bottom: 6px;
@@ -750,6 +805,7 @@ export default defineComponent({
   font-size: 14px;
   color: #909399;
 }
+
 /*操作*/
 .details-actions {
   width: 100%;
@@ -764,25 +820,28 @@ export default defineComponent({
   margin-top: 15px;
 }
 
-.action-button{
+.action-button {
   width: 24%;
-  height: 50px;
+  height: 60px;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center; /* 确保图标和文字水平居中 */
   padding: 5px 10px;
   border-radius: 8px;
-
   background-color: var(--bg-color1);
-
   cursor: pointer;
 }
 
-.action-icon{
-  width: 80%;
+.action-icon {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  font-size: 24px; /* <--- 在这里添加字体大小来放大 icon，数字可以自行微调 */
+  margin-bottom: 4px; /* <--- 加一点间距，让图标和下面的文字不贴在一起 */
 }
 
-.action-font{
+.action-font {
   display: flex;
   justify-content: center;
   font-size: 14px;
@@ -791,29 +850,56 @@ export default defineComponent({
 /*remark & bio*/
 /*common groups*/
 /*operate*/
-.details-full-info{
+.details-full-info {
   width: 100%;
   background-color: var(--bg-color1);
   margin-top: 10px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+
+  display: flex;
+  flex-direction: column;
+
+  font-size: 15px;
+
+  cursor: pointer;
+}
+
+.person-info {
+  width: 100%;
+  padding-left: 20px;
+  font-size: 14px;
+
+  padding-top: 5px;
+  padding-bottom: 5px;
 
   display: flex;
   flex-direction: column;
 }
 
-.person-info{
+.full-info {
   width: 100%;
-  padding: 10px 10px;
-
-  display: flex;
-  flex-direction: column;
-}
-
-.full-info{
-  width: 100%;
+  height: 35px;
 
   display: flex;
   flex-direction: row;
-  padding: 10px 10px;
+  align-items: center;
+  padding-left: 20px;
+}
+
+.full-info:hover {
+  background-color: var(--bg-color3);
+}
+
+.full-info-icon{
+  font-size: 18px;
+  margin-right: 20px;
+}
+
+/* 让最后的操作区块自动占满底部剩余空间 */
+.operate-block {
+  flex: 1; /* 重点：指示其占据 Flex 父容器的所有剩余高度 */
+  margin-bottom: 0; /* 确保底部没有多余的外边距贴合窗口底边 */
 }
 
 

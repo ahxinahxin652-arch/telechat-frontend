@@ -24,7 +24,7 @@ export const contactApi = {
      * @returns Promise<DeleteContactResponse>
      */
     deleteContact(id: number): Promise<DeleteContactResponse> {
-        return request.delete(`/contact/delete/${id}`);
+        return request.delete(`/contact/${id}`);
     },
 
     /**

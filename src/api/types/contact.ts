@@ -7,6 +7,7 @@ export interface ContactVO {
     nickname: string;
     avatar: string;
     remark: string;
+    bio: string;
 }
 
 export interface UpdateContactDTO {
