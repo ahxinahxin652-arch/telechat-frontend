@@ -103,16 +103,14 @@ export default defineComponent({
       inputMessage.value = ''
     }
 
-    // 修改点：处理按键逻辑
+    // 处理按键逻辑
     const handleKeydown = (e: KeyboardEvent) => {
-      // 如果按的是 Enter 键
       if (e.key === 'Enter') {
-        // 如果按下了 Shift 键（Shift+Enter），或者正在进行中文输入法输入（isComposing）
-        // 则直接返回，执行默认的换行行为
+        // Shift+Enter 或 输入法输入期间，保持默认换行
         if (e.shiftKey || e.isComposing) {
           return
         }
-        // 否则阻止默认换行，并发送消息
+        // Enter 发送
         e.preventDefault()
         handleSend()
       }
@@ -211,6 +209,7 @@ export default defineComponent({
   flex: 1;
 }
 
+/* 修改点 2：输入框内部预留滚动条位置，防止换行时文字抖动 */
 .message-input :deep(.el-textarea__inner) {
   outline: none;
   border: none;
@@ -220,6 +219,9 @@ export default defineComponent({
   padding: 10px;
   min-height: 35px !important;
   color: white;
+
+  /* 关键属性：预留滚动条空间 */
+  scrollbar-gutter: stable;
 }
 
 .message-input :deep(.el-textarea__inner:focus) {
@@ -234,6 +236,9 @@ export default defineComponent({
   padding: 10px 20px;
   overflow-y: auto;
   flex: 1;
+
+  /* 修改点 1：预留滚动条位置，防止出现滚动条时内容被挤压 */
+  scrollbar-gutter: stable;
 }
 
 .message-text {
