@@ -4,7 +4,13 @@
       :class="{ active: isActive }"
       @click="$emit('click')"
   >
-    <div class="avatar">{{ chat.avatar || chat.name.charAt(0) }}</div>
+    <div class="avatar">
+      <!--默认图片，如果avatar为空显示文字-->
+      <img class="avatar"
+          v-if=chat.avatar
+          :src="chat.avatar"
+          :alt="chat.name[0]">
+    </div>
     <div class="chat-info">
       <div class="chat-name">{{ chat.name }}</div>
       <div class="last-message">{{ chat.lastMessage }}</div>
@@ -60,8 +66,8 @@ export default defineComponent({
 }
 
 .avatar {
-  width: 35px;
-  height: 35px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background-color: #409eff;
   color: white;
@@ -80,6 +86,9 @@ export default defineComponent({
 
 .chat-name {
   font-weight: 500;
+  font-size: 16px;
+
+  margin-left: 5px;
   margin-bottom: 4px;
 }
 

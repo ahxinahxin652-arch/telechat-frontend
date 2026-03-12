@@ -2,7 +2,12 @@
   <el-container class="chat-window-inner" style="height: 100%;">
     <el-header class="chat-header">
       <div class="chat-header-info">
-        <div class="avatar">{{ chatInfo?.avatar || 'U' }}</div>
+        <div class="avatar">
+          <img class="avatar"
+               v-if=chatInfo.avatar
+               :src="chatInfo.avatar"
+               :alt="chatInfo.name[0]">
+        </div>
         <div class="user-info">
           <div class="user-name">{{ chatInfo?.name || '用户名' }}</div>
           <div class="user-status">在线</div>
