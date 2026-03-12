@@ -30,7 +30,9 @@ export interface DeleteContactResponse {
 }
 
 // 更新联系人 request
-export interface UpdateContactRequest extends UpdateContactDTO {}
+export interface UpdateContactRequest extends UpdateContactDTO {
+
+}
 
 // 更新联系人 response
 export interface UpdateContactResponse {

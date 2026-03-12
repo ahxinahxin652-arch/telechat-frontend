@@ -100,7 +100,6 @@ export default defineComponent({
             }, 0);
           });
           this.loadContacts();
-          this.loadContactApplies();
         } else {
           this.startSlideOut();
         }
@@ -174,9 +173,14 @@ export default defineComponent({
       }, 500);
     },
 
+    // todo
     openContactsApply() {
+      // 加载联系请求
+      this.loadContactApplies();
       this.closeContactsWithoutAnimation();
       this.showContactApplyModal = true;
+
+      // 联系请求设为已读
       this.notificationStore.clearContactApply();
     },
 

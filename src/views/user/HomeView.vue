@@ -56,6 +56,7 @@
         v-model="showProfile"
         @close="showProfile = false"
     />
+
     <MyContacts
         v-model="showMyContacts"
         @close="showMyContacts = false"
