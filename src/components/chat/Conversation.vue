@@ -38,6 +38,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { Operation, Loading } from '@element-plus/icons-vue'
 import ConversationItem, { ChatItemInfo } from '@/components/chat/ConversationItem.vue'
 import { userConversationStore } from '@/stores/conversation'
+import {ConversationVO} from "@/api/types/conversation";
 
 // eslint-disable-next-line no-undef
 const emit = defineEmits(['toggle-sidebar', 'select-chat'])
@@ -74,24 +75,55 @@ const handleScroll = (e: Event) => {
 }
 
 // VO映射转换
-const mapToChatItem = (vo: any): ChatItemInfo => {
+const mapToChatItem = (vo: ConversationVO): ChatItemInfo => {
   return {
-    id: vo.id || vo.conversationId,
-    name: vo.title || vo.name || '未知会话',
+    id: vo.id,
+    name: vo.title || '未知会话',
     avatar: vo.avatar,
+    isTop: vo.isTop,
+    isMuted: vo.isMuted,
     lastMessage: vo.lastMessageContent || '',
-    lastTime: formatTime(vo.lastMessageTime),
+    lastTime: formatChatTime(vo.lastMessageTime),
     unreadCount: vo.unreadCount || 0,
-    status: vo.status === 1 ? 'online' : 'offline'
   }
 }
 
-// 格式化时间
-const formatTime = (timeStr: string) => {
-  if (!timeStr) return ''
-  const date = new Date(timeStr)
-  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-}
+/**
+ * 企业级 IM 时间格式化规则：
+ * 1. 如果是今天：显示 HH:mm (例如 14:05)
+ * 2. 如果不是今天：显示 yyyy/MM/dd (例如 2024/03/15)
+ * * @param timeStr 后端返回的 ISO 时间字符串或毫秒戳
+ * @returns 格式化后的字符串
+ */
+const formatChatTime = (timeStr: string | number | Date): string => {
+  if (!timeStr) return '';
+
+  const date = new Date(timeStr);
+  const now = new Date();
+
+  // 性能优化：检查是否为合法日期
+  if (isNaN(date.getTime())) return '';
+
+  // 获取今天零点的日期对象，用于精确比较是否跨天
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+
+  if (today === targetDate) {
+    // 1. 如果是今天：只显示小时分钟
+    // 使用 'en-GB' 强制 24 小时制，或者根据需求使用 'zh-CN' 并设置 hour12: false
+    return date.toLocaleTimeString('zh-CN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  } else {
+    // 2. 如果不是今天：显示年/月/日
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}/${month}/${day}`;
+  }
+};
 
 // 选中会话逻辑
 const handleSelectChat = (rawChat: any) => {
@@ -171,7 +203,7 @@ onUnmounted(() => {
   width: 4px;
 }
 .chat-items::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: var(--scrollbar-color);
   border-radius: 4px;
 }
 
@@ -179,7 +211,7 @@ onUnmounted(() => {
   padding: 15px 0;
   text-align: center;
   font-size: 12px;
-  color: #999;
+  color: var(--loading-color);
   display: flex;
   justify-content: center;
   align-items: center;

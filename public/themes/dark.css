@@ -12,8 +12,13 @@
     --side-chat-active-color: rgb(43, 82, 120);
     --icon-color: rgb(23, 33, 43);
     --font-color: rgb(233, 232, 232);
+    --last-message-color: rgb(72, 162, 214);
     --hover-icon-color: rgb(64, 158, 255);
 
     --button-color: rgb(43, 82, 120);
     --button-hover-color: rgb(32, 43, 54);
+
+    --loading-color: rgb(123, 123, 123);
+
+    --scrollbar-color: rgb(43, 82, 120);
 }

@@ -1,7 +1,7 @@
 /* 白天主题样式 */
 :root {
-    --bg-color1: rgb(245, 245, 245); /* 浅灰色背景 */
-    --bg-color2: rgb(255, 255, 255); /* 白色背景 */
+    --bg-color1: rgb(203, 253, 192); /* 浅灰色背景 */
+    --bg-color2: rgba(182, 248, 110, 0.68); /* 白色背景 */
     --bg-color3: rgb(203, 253, 192); /* 好友背景 */
     --border-color: rgb(220, 220, 220);
     --input-color: rgb(255, 255, 255);
@@ -12,9 +12,14 @@
     --side-chat-active-color: rgb(173, 216, 230);
     --icon-color: rgb(245, 245, 245);
     --font-color: rgb(0, 0, 0); /* 黑色文字 */
+    --last-message-color: rgb(77, 75, 75);
     --hover-icon-color: rgb(64, 158, 255);
 
     --button-color: rgb(36, 105, 208);
     --button-hover-color: rgb(64, 158, 255);
+
+    --loading-color: rgba(32, 31, 31, 0.98);
+
+    --scrollbar-color: rgb(220, 220, 220);
 }
 
