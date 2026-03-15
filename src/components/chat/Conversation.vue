@@ -37,12 +37,12 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { Operation, Loading } from '@element-plus/icons-vue'
 import ConversationItem, { ChatItemInfo } from '@/components/chat/ConversationItem.vue'
-import { useConversationStore } from '@/stores/conversation'
+import { userConversationStore } from '@/stores/conversation'
 
 // eslint-disable-next-line no-undef
 const emit = defineEmits(['toggle-sidebar', 'select-chat'])
 
-const conversationStore = useConversationStore()
+const conversationStore = userConversationStore()
 const searchMessage = ref('')
 const activeChatId = ref<string | number | null>(null)
 const scrollTicking = ref(false)
@@ -52,12 +52,6 @@ const initConversations = async () => {
   try {
     await conversationStore.preHeat()
     await conversationStore.loadMore(true)
-
-    // 如果加载完有数据，默认选中第一个
-    if (conversationStore.conversationList.length > 0) {
-      const firstChat = conversationStore.conversationList[0]
-      handleSelectChat(firstChat)
-    }
   } catch (error) {
     console.error("初始化会话失败:", error)
   }
@@ -121,18 +115,13 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* 全局icon */
+/* 保持原样式不变 */
 .el-icon {
-  background-color: var(--icon-color);
   width: 30px;
   height: 30px;
   font-size: 25px;
   padding: 0;
-}
-
-.el-icon:hover {
-  color: var(--hover-icon-color);
-  transition: all 0.3s;
+  background-color: var(--icon-color);
 }
 
 .chat-list {

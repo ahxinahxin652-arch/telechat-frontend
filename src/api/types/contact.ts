@@ -1,8 +1,8 @@
 // src/api/types/contact.ts
 
 export interface ContactVO {
-    id: number;
-    userId: number;
+    id: string;
+    userId: string;
     username: string;
     nickname: string;
     avatar: string;

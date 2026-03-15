@@ -20,9 +20,15 @@
       </el-container>
     </el-container>
 
+    <!--侧边栏  -->
     <SideBarView v-model="showSideBarView" @close="showSideBarView = false" @profile="goToProfile" @create-group="createNewGroup" @create-channel="createNewChannel" @my-contacts="goToMyContacts" @settings="goToSettings" @logout="logout" />
+    <!--个人信息  -->
     <Profile v-model="showProfile" @close="showProfile = false" />
+    <!--我的联系人  -->
     <MyContacts v-model="showMyContacts" @close="showMyContacts = false" />
+    <!--创建新群聊  -->
+    <NewGroup v-model="showNewGroup" @close="showNewGroup = false" />
+
   </div>
 </template>
 
@@ -37,10 +43,12 @@ import ChatWindow from '@/components/chat/ChatWindow.vue'
 import { ChatItemInfo } from '@/components/chat/ConversationItem.vue'
 import { ElMessage } from 'element-plus'
 import themeManager from '@/utils/themeManager'
+import NewGroup from "@/components/create/NewGroup.vue";
 
 export default defineComponent({
   name: 'HomeView',
   components: {
+    NewGroup,
     SideBarView,
     Profile,
     MyContacts,
@@ -60,6 +68,8 @@ export default defineComponent({
       showSideBarView: false,
       showProfile: false,
       showMyContacts: false,
+      showNewGroup: false,
+
     }
   },
   methods: {
@@ -113,9 +123,9 @@ export default defineComponent({
 
     // 其他原有方法
     async goToProfile() { this.showProfile = true; },
-    createNewGroup() { console.log('创建新群聊'); ElMessage.info('创建新群聊功能待实现'); },
+    createNewGroup() { this.showNewGroup = true; },
     createNewChannel() { console.log('创建新频道'); ElMessage.info('创建新频道功能待实现'); },
-    goToMyContacts() { console.log('跳转到我的联系人'); this.showMyContacts = true; },
+    goToMyContacts() {this.showMyContacts = true; },
     goToSettings() { console.log('跳转到设置'); },
     logout() { console.log('退出登录'); },
 

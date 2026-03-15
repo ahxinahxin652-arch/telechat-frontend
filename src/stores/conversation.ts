@@ -1,13 +1,14 @@
 import { defineStore } from 'pinia';
 import { conversationApi } from '@/api/modules/conversation';
 import type { ConversationVO } from '@/api/types/conversation';
+import { ElMessage } from "element-plus";
 
-export const useConversationStore = defineStore('conversation', {
+export const userConversationStore = defineStore('conversation', {
     state: () => ({
         conversationList: [] as ConversationVO[], // 会话列表数据
         cursor: 0, // 当前加载到的最小 score (下一页的起点)，0 代表第一页
         hasMore: true, // 是否还有更多数据 (触底判定)
-        isLoading: false, // 懒加载防抖锁：防止用户疯狂下拉发出重复请求
+        isLoading: false, // 懒加载防抖锁
         isPreHeating: false, // 预热防抖锁
     }),
 
@@ -25,13 +26,11 @@ export const useConversationStore = defineStore('conversation', {
     actions: {
         /**
          * 1. 触发后台异步预热
-         * 通常在用户刚登录，或者从后台切回前台时调用
          */
         async preHeat() {
             if (this.isPreHeating) return;
             this.isPreHeating = true;
             try {
-                // 预热只是通知后端干活，不需要等待返回值，也不影响前端当前展示
                 await conversationApi.preHeat({});
             } catch (error) {
                 console.error("预热会话失败", error);
@@ -50,83 +49,106 @@ export const useConversationStore = defineStore('conversation', {
 
             this.isLoading = true;
 
-            // 如果是刷新，重置游标和状态，但不立即清空 list (防止 UI 闪烁，等新数据回来再替换)
-            if (isRefresh) {
-                this.cursor = 0;
-                this.hasMore = true;
-            }
+            // 优化体验：如果是刷新，取 0 为游标，但不立刻清空状态，防止接口报错导致页面白屏闪烁
+            const fetchCursor = isRefresh ? 0 : this.cursor;
 
             try {
-                const res = await conversationApi.lazyLoad({ cursor: this.cursor });
+                const res = await conversationApi.lazyLoad({ cursor: fetchCursor });
                 const newData = res.data || [];
 
-                // 【核心防线 1：哨兵拦截】检查后端是否传回了 "-1" 哨兵
+                // 【防线 1：哨兵与空数据拦截】
                 const sentinelIndex = newData.findIndex(item => item.id === "-1");
                 let validData = newData;
 
                 if (sentinelIndex !== -1) {
                     this.hasMore = false; // 命中哨兵，标记彻底触底
-                    validData = newData.slice(0, sentinelIndex); // 剔除哨兵及之后的所有脏数据
+                    validData = newData.slice(0, sentinelIndex); // 剔除脏数据
+                } else if (newData.length === 0) {
+                    this.hasMore = false; // 后端没传哨兵但数据为空，同样触底
+                } else if (isRefresh) {
+                    this.hasMore = true;  // 刷新且有数据，重置触底状态
+                }
+
+                // 【防线 2：精准记录下一次游标】(核心修复)
+                // 必须从 validData 中取最小 score 作为游标，而不是依赖 this.conversationList
+                if (validData.length > 0) {
+                    this.cursor = Math.min(...validData.map(item => item.score));
                 }
 
                 if (isRefresh) {
                     // 刷新：直接替换
                     this.conversationList = validData;
                 } else {
-                    // 懒加载追加：【核心防线 2：高性能去重】
-                    // 防止因数据滑动期间有新消息插入，导致同一条数据在两页中重复出现
+                    // 懒加载追加：【高性能去重】防止数据滑动期间新消息导致错位重复
                     const existingIds = new Set(this.conversationList.map(item => item.id));
                     const uniqueNewItems = validData.filter(item => !existingIds.has(item.id));
-
                     this.conversationList.push(...uniqueNewItems);
                 }
 
-                // 【核心防线 3：游标更新】更新最小 score 供下次请求使用
-                if (this.conversationList.length > 0) {
-                    this.cursor = this.conversationList[this.conversationList.length - 1].score;
-                }
+                // 统一排序：确保置顶的在最前面，同状态按 score 降序
+                this.sortConversations();
 
             } catch (error) {
                 console.error("获取会话列表失败", error);
+                ElMessage.error("获取会话列表失败，请检查网络");
             } finally {
                 this.isLoading = false;
             }
         },
 
         /**
-         * 3. 丝滑体验必备：WebSocket 收到新消息时，局部更新会话并重排版
-         * @param updatedConvo 包含最新消息内容的会话对象
+         * 3. 丝滑体验必备：WebSocket 收到新消息时的局部更新
+         * @param updatedConversation 包含最新消息内容的会话对象
          */
-        updateOrInsertConversation(updatedConvo: ConversationVO) {
-            const index = this.conversationList.findIndex(c => c.id === updatedConvo.id);
+        updateOrInsertConversation(updatedConversation: ConversationVO) {
+            const index = this.conversationList.findIndex(c => c.id === updatedConversation.id);
 
             if (index !== -1) {
-                // 场景 A：会话已存在，更新内容、时间、未读数和 score
-                this.conversationList[index] = {
-                    ...this.conversationList[index],
-                    ...updatedConvo
-                };
+                // 场景 A：会话已存在
+                const existingConv = this.conversationList[index];
+                // 合并最新属性
+                const mergedConv = { ...existingConv, ...updatedConversation };
+
+                // 【体验优化】：先将它从原位置拔出
+                this.conversationList.splice(index, 1);
+                // 再插到数组最头部 (最新消息理应在最上面)
+                this.conversationList.unshift(mergedConv);
             } else {
-                // 场景 B：全新会话（别人刚加你发的第一条消息），直接插入
-                this.conversationList.push(updatedConvo);
+                // 场景 B：全新会话，直接放在最前面
+                this.conversationList.unshift(updatedConversation);
             }
 
-            // 【重排序】：因为有了新消息，该会话的 score 变大了，必须重新按 score 降序排列
-            // 这样这个会话就会“丝滑”地飞到列表最顶部！
-            this.conversationList.sort((a, b) => b.score - a.score);
+            // 【体验优化】：重新整理排序，处理 "置顶会话" 的优先级
+            this.sortConversations();
         },
 
         /**
          * 4. 清除特定会话未读数 (点进聊天框时触发)
          */
+        // eslint-disable-next-line no-unused-vars
         clearUnreadCount(conversationId: string) {
-            const index = this.conversationList.findIndex(c => c.id === conversationId);
+/*            const index = this.conversationList.findIndex(c => c.id === conversationId);
             if (index !== -1 && this.conversationList[index].unreadCount > 0) {
                 // 乐观更新 UI：立马消灭红点
                 this.conversationList[index].unreadCount = 0;
-                // TODO: 异步调用后端 API 同步未读数清零状态
-                // conversationApi.clearUnread(conversationId);
-            }
+                // 调用 API，不阻塞前端
+                conversationApi.clearUnread(conversationId).catch(err => {
+                    console.error("清除未读数失败", err);
+                });
+            }*/
+        },
+
+        /**
+         * 内部公共方法：按照企业级 IM 规则排序
+         * 规则：置顶会话(isTop = true)永远在最上面，同一层级按 score 降序排列
+         */
+        sortConversations() {
+            this.conversationList.sort((a, b) => {
+                if (a.isTop !== b.isTop) {
+                    return a.isTop ? -1 : 1; // a如果是置顶，排前面
+                }
+                return b.score - a.score; // 状态一样，score(时间戳)大的排前面
+            });
         },
 
         /**
@@ -137,6 +159,7 @@ export const useConversationStore = defineStore('conversation', {
             this.cursor = 0;
             this.hasMore = true;
             this.isLoading = false;
+            this.isPreHeating = false;
         }
     }
 });

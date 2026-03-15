@@ -42,7 +42,14 @@ export interface LazyLoadConversationRequest {
 }
 
 /**
- * 预热会话相应
+ * 创建群聊会话请求
+ */
+export interface CreateGroupRequest {
+    memberIds: string[];
+}
+
+/**
+ * 预热会话响应
  */
 export interface PreHeatConversationResponse{
     code: number;
@@ -51,10 +58,19 @@ export interface PreHeatConversationResponse{
 }
 
 /**
- * 预热会话相应
+ * 懒加载会话响应
  */
 export interface LazyLoadConversationResponse{
     code: number;
     msg: string;
     data: ConversationVO[];
+}
+
+/**
+ * 创建群聊会话响应
+ */
+export interface CreateGroupResponse{
+    code: number;
+    msg: string;
+    data: ConversationVO;
 }

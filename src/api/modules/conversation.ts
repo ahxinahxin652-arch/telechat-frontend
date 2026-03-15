@@ -5,6 +5,8 @@ import {
     PreHeatConversationResponse,
     LazyLoadConversationRequest,
     LazyLoadConversationResponse,
+    CreateGroupRequest,
+    CreateGroupResponse,
 
 } from "../types/conversation";
 
@@ -17,7 +19,7 @@ export const conversationApi = {
      * */
     preHeat(data: PreHeatConversationRequest): Promise<PreHeatConversationResponse> {
         return request.get('/conversation/preHeat', {
-            params: data // GET 参数必须包裹在 params 字段中
+            params: data
         });
     },
 
@@ -28,7 +30,16 @@ export const conversationApi = {
      * */
     lazyLoad(data: LazyLoadConversationRequest): Promise<LazyLoadConversationResponse> {
         return request.get('/conversation/lazyLoad', {
-            params: data // 自动转换成 /conversation/lazyLoad?cursor=xxx
+            params: data
         });
     },
+
+    /**
+     * 创建群聊会话
+     * @param data 个人简介信息
+     * @returns Promise<UpdateProfileResponse>
+     * */
+    createGroup(data: CreateGroupRequest): Promise<CreateGroupResponse> {
+        return request.post('/conversation/createGroup', data);
+    }
 }
