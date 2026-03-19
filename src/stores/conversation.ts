@@ -10,6 +10,7 @@ export const userConversationStore = defineStore('conversation', {
         hasMore: true, // 是否还有更多数据 (触底判定)
         isLoading: false, // 懒加载防抖锁
         isPreHeating: false, // 预热防抖锁
+
     }),
 
     getters: {

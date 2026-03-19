@@ -38,12 +38,16 @@ import { useRouter } from 'vue-router'
 import SideBarView from '@/components/SideBarView.vue'
 import Profile from '@/components/Profile.vue'
 import MyContacts from "@/components/MyContacts.vue"
-import Conversation from '@/components/chat/Conversation.vue' // 引入新建的 Conversation 组件
+import Conversation from '@/components/chat/Conversation.vue'
 import ChatWindow from '@/components/chat/ChatWindow.vue'
 import { ChatItemInfo } from '@/components/chat/ConversationItem.vue'
 import { ElMessage } from 'element-plus'
 import themeManager from '@/utils/themeManager'
 import NewGroup from "@/components/create/NewGroup.vue";
+
+// 引入相关的 Store
+import { useWebSocketStore } from '@/stores/websocket'
+import { useUserStore } from '@/stores/user'
 
 export default defineComponent({
   name: 'HomeView',
@@ -57,7 +61,9 @@ export default defineComponent({
   },
   setup() {
     const router = useRouter()
-    return { router }
+    const wsStore = useWebSocketStore()
+    const userStore = useUserStore()
+    return { router, wsStore, userStore }
   },
   data() {
     return {
@@ -110,7 +116,7 @@ export default defineComponent({
         };
         this.websocket.send(JSON.stringify(message));
       } else {
-        // ElMessage.error('WebSocket连接未建立');
+        ElMessage.error('WebSocket连接未建立');
       }
 
       // 本地 UI 更新
@@ -128,36 +134,11 @@ export default defineComponent({
     goToMyContacts() {this.showMyContacts = true; },
     goToSettings() { console.log('跳转到设置'); },
     logout() { console.log('退出登录'); },
-
-    initWebsocket() {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      const wsUrl = `ws://localhost:8888/ws/chat?token=${encodeURIComponent(token)}`;
-      this.websocket = new WebSocket(wsUrl);
-      this.websocket.onopen = () => { console.log('WebSocket连接已建立'); };
-      this.websocket.onmessage = (event) => {
-        const message = JSON.parse(event.data);
-        console.log('收到消息:', message);
-        this.handleIncomingMessage(message);
-      };
-      this.websocket.onerror = (error) => { console.error('WebSocket错误:', error); };
-      this.websocket.onclose = () => { console.log('WebSocket连接已关闭'); };
-    },
-
-    handleIncomingMessage(message: any) {
-      if (message.type === 'chat' && this.selectedChat) {
-        this.messages.push({
-          senderId: message.senderId || 'other',
-          content: message.content,
-          timestamp: 'Now'
-        });
-      }
-    }
   },
   mounted() {
     themeManager.init();
-    this.initWebsocket();
+    // 连接websocket
+    this.wsStore.initWebsocket();
   }
 })
 </script>

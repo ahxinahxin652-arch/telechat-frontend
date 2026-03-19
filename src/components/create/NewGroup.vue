@@ -226,10 +226,10 @@ export default defineComponent({
         conversationStore.updateOrInsertConversation(response.data);
 
         // 模拟成功
-        ElMessage.success(`群聊创建成功:`+ response.data);
+        ElMessage.success(`群聊创建成功！`);
         this.closeModal();
       } catch (error) {
-        ElMessage.error("创建群聊失败");
+        ElMessage.error("创建群聊失败，请稍后再试");
       }
     },
 
